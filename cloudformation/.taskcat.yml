@@ -1,0 +1,7 @@
+project:
+  name: aws-test-exp
+  regions:
+    - eu-central-1
+tests:
+  default:
+    template: ./resources.yml

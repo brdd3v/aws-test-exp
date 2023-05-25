@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  ParamBucketName:
+    Type: String
+    Default: bucket-abc-xyz-exp-3
+  ParamFunctionName:
+    Type: String
+    Default: lambda-func-exp-3
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DependsOn:
+      - LambdaPermission
+    Properties:
+      BucketName: !Ref ParamBucketName
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt LambdaFunction.Arn
+      Tags:
+        - Key: Env
+          Value: Dev
+        - Key: Owner
+          Value: AWSCF
+
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub 'arn:aws:s3:::${ParamBucketName}'
+
+  LambdaIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "iam_for_lambda-exp-3"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: "lambda_logging-exp-3"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+        - PolicyName: "lambda_s3-exp-3"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub 'arn:aws:s3:::${ParamBucketName}/*'
+      Tags:
+        - Key: Env
+          Value: Dev
+        - Key: Owner
+          Value: AWSCF
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref ParamFunctionName
+      Runtime: python3.9
+      Role: !GetAtt LambdaIAMRole.Arn
+      Handler: index.lambda_handler
+      Code:
+        ZipFile: |
+          import boto3
+
+
+          s3_client = boto3.client('s3', region_name="eu-central-1")
+
+
+          def lambda_handler(event, context):
+              # Get the object from the event and show its content type
+              bucket = event['Records'][0]['s3']['bucket']['name']
+              key = event['Records'][0]['s3']['object']['key']
+
+              status = "OK"
+              content_type = "text/plain"
+              try:
+                  response = s3_client.get_object(Bucket=bucket, Key=key)
+                  content_type = response['ContentType']
+                  print(f"Key = {key}, ContentType = {content_type}")
+              except Exception as e:
+                  print(e)
+                  print(f"Error getting object '{key}' from bucket '{bucket}'.")
+                  status = "Error"
+                  content_type = ""
+              finally:
+                  return {"status": status, "key": key, "content_type": content_type}
+      Tags:
+        - Key: Env
+          Value: Dev
+        - Key: Owner
+          Value: AWSCF
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ParamFunctionName}'
+      RetentionInDays: 14
+      Tags:
+        - Key: Env
+          Value: Dev
+        - Key: Owner
+          Value: AWSCF

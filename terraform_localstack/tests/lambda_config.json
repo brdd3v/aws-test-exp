@@ -1,0 +1,28 @@
+{
+    "Config": {
+        "FunctionName": "lambda-func-exp-1",
+        "Runtime": "python3.9",
+        "Role": "arn:aws:iam::000000000000:role/iam_for_lambda-exp-1",
+        "Handler": "lambda_func.lambda_handler",
+        "Description": "",
+        "Timeout": 3,
+        "MemorySize": 128,
+        "Version": "$LATEST",
+        "TracingConfig": {
+            "Mode": "PassThrough"
+        },
+        "State": "Active",
+        "LastUpdateStatus": "Successful",
+        "PackageType": "Zip",
+        "Architectures": [
+            "x86_64"
+        ],
+        "EphemeralStorage": {
+            "Size": 512
+        },
+        "SnapStart": {
+            "ApplyOn": "None",
+            "OptimizationStatus": "Off"
+        }
+    }
+}

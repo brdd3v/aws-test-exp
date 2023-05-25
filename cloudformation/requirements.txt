@@ -1,0 +1,5 @@
+cfn-flip==1.3.0
+cfn-lint==0.75.1
+pytest==7.2.2
+taskcat==0.9.38
+troposphere==4.3.2

@@ -1,0 +1,6 @@
+config:
+  aws:region: eu-central-1
+  aws:defaultTags:
+    tags:
+      Env: Dev
+      Owner: PulumiProviders
